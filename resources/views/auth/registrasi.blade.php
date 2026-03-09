@@ -38,7 +38,10 @@
                             })
                             </script>
                             @endif
-
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" name="email" class="form-control" required>
+                            </div>
                             <!-- Username -->
                             <div class="mb-4">
                                 <label class="form-label" for="username">Username</label>

@@ -28,82 +28,33 @@ class AuthController extends Controller
 
     // Function untuk halaman proses login
     public function proses_login(Request $request)
-    {
+{
+    $username = $request->username;
+    $password = $request->password;
 
-        // Ambil nilai name form
-        $username = $request->input('username');
-        $password = $request->input('password');
-        $remember = request()->has('remember') ? request()->input('remember') : '';
+    // Ambil data user
+    $data = AuthModel::where('username', $username)->first();
 
-        // Ambil data dari tabel tbl_auth berdasarkan username
-        $data = AuthModel::where('username', $username)->first();
-
-        // Cek jika username tidak ditemukan dalam tabel tbl_auth
-        if (!$data) {
-
-            // menampilkan flash message bahwa username tidak valid
-            Session::flash('username_tidak_valid', 'Username tidak valid. Silakan coba lagi.');
-
-            // redirect ke halaman login
-            return redirect('/auth');
-
-            // Misalkan username nya ada dalam tabel bernama tbl_auth
-        } else {
-
-            // menyimpan nilai username dan password pada array credentials
-            $credentials = [
-                'username' => $username,
-                'password' => $password
-            ];
-
-            // memeriksa apakah password yang di ketikkan pada field password berupa plain text 
-            // yang dimasukkan pada pengguna itu sesuai dengan password pada tabel tbl_auth yang sudah ter hash
-            $password_verify = Hash::check($password, $data->password);
-
-            // Cek jika username dan password sesuai untuk di setujui ke authentication
-            if (Auth::guard('admin')->attempt($credentials)) {
-
-                // Cek jika password juga sesuai untuk mencocokkan password yang telah ter hash dalam tabel tbl_auth
-                if ($password_verify) {
-
-                    // membuat session baru
-                    $request->session()->regenerate();
-
-                    // membuat session username ID sebagai penanda ketika berhasil login 
-                    session(['username_ID' => $username]);
-
-                    // set untuk menampilkan flash message bahwa login berhasil
-                    Session::flash('app', 'Selamat datang ' . $username . '.');
-
-                    // mengatur cookie jika pengguna memilih opsi "remember me"
-                    if ($remember == 'on') {
-
-                        // Mengatur waktu kadaluarsa cookie 2 hari
-                        $minutes = 60 * 24 * 2;
-
-                        // redirect ke halaman dashboard beserta cookie
-                        return redirect()->intended('/dashboard')->withCookie(cookie('log_', $username, $minutes));
-
-                        // Misal pengguna tidak memilih opsi "remember me"
-                    } else {
-
-                        // redirect ke halaman dashboard tanpa cookie
-                        return redirect()->intended('/dashboard');
-                    }
-                }
-            }
-
-            // Cek jika password nya itu tidak cocok dalam tabel tbl_auth yang sudah di hash
-            if (!$password_verify) {
-
-                // menampilkan flash message bahwa password tidak valid
-                Session::flash('password_tidak_valid', 'Password Anda tidak valid. Silakan coba lagi.');
-
-                // redirect ke halaman login
-                return redirect('/auth')->withInput();
-            }
-        }
+    if (!$data) {
+        Session::flash('username_tidak_valid', 'Username tidak valid. Silakan coba lagi.');
+        return redirect('/auth');
     }
+
+    // cek password
+    if (Hash::check($password, $data->password)) {
+
+        // buat session
+        $request->session()->regenerate();
+        session(['username_ID' => $username]);
+
+        Session::flash('app', 'Selamat datang ' . $username);
+
+        return redirect('/dashboard');
+    }
+
+    Session::flash('password_tidak_valid', 'Password Anda tidak valid. Silakan coba lagi.');
+    return redirect('/auth')->withInput();
+}
 
     // Function proses registrasi
     public function registrasi()
@@ -134,8 +85,9 @@ class AuthController extends Controller
 
             //  Inisialisasi untuk melakukan insert
             $registrasi = new AuthModel();
+            $registrasi->email = $request->email;
             $registrasi->username = $request->username;
-            $registrasi->password = Hash::make($request->password);
+            $registrasi->password = Hash::make($request->password); 
 
             // Jika berhasil registrasi
             if ($registrasi->save()) {

@@ -11,11 +11,13 @@ class MahasiswaModel extends Model
 
     protected $table = 'tbl_mahasiswa';
     protected $primaryKey = 'id_mahasiswa';
+
     protected $fillable = [
         'nama',
         'jenis_kelamin',
         'jurusan',
         'status'
     ];
+
     public $timestamps = false;
 }
